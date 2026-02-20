@@ -1,0 +1,98 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import ProtectedLayout from '@/components/layouts/ProtectedLayout';
+import DailyLogForm from '@/components/forms/DailyLogForm';
+import { dailyLogService } from '@/services/dailylog-service';
+import { CreateDailyLogDto } from '@/models/DailyLog';
+
+export default function CreateDailyLogPage() {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  const handleSubmit = async (data: CreateDailyLogDto) => {
+    setError('');
+    setSuccess(false);
+    setIsLoading(true);
+
+    try {
+      await dailyLogService.createLog(data);
+      setSuccess(true);
+      
+      // Show success message and redirect after a short delay
+      setTimeout(() => {
+        router.push('/dailylogs');
+      }, 1500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create log');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <ProtectedLayout>
+      <div className="container">
+        <div className="row mb-4">
+          <div className="col-12">
+            <nav aria-label="breadcrumb">
+              <ol className="breadcrumb">
+                <li className="breadcrumb-item">
+                  <a href="/dashboard">Dashboard</a>
+                </li>
+                <li className="breadcrumb-item">
+                  <a href="/dailylogs">Daily Logs</a>
+                </li>
+                <li className="breadcrumb-item active" aria-current="page">
+                  Create
+                </li>
+              </ol>
+            </nav>
+            <h1 className="heading-1">Create Daily Log ✏️</h1>
+            <p className="text-secondary">Document your daily development activities, challenges, and learnings</p>
+          </div>
+        </div>
+
+        <div className="row">
+          <div className="col-lg-10 col-xl-8">
+            {error && (
+              <div className="alert alert-danger alert-dismissible fade show" role="alert">
+                <strong>Error:</strong> {error}
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setError('')}
+                  aria-label="Close"
+                ></button>
+              </div>
+            )}
+
+            {success && (
+              <div className="alert alert-success" role="alert">
+                <strong>Success!</strong> Your daily log has been created. Redirecting...
+              </div>
+            )}
+
+            <DailyLogForm onSubmit={handleSubmit} isLoading={isLoading} />
+
+            <div className="card border-info mb-4">
+              <div className="card-body">
+                <h6 className="card-title text-info">💡 Tips for Effective Logging</h6>
+                <ul className="mb-0 text-small">
+                  <li>Be specific about the tasks you worked on</li>
+                  <li>Document problems as soon as they occur for better recall</li>
+                  <li>Include technical details in your solutions</li>
+                  <li>Reflect on what you learned and how it applies to future work</li>
+                  <li>Share practical tips that your future self (or teammates) might find useful</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ProtectedLayout>
+  );
+}
