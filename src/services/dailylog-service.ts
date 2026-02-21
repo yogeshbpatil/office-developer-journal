@@ -10,6 +10,7 @@ let MOCK_DAILY_LOGS: DailyLog[] = [
     solutions: 'Configured CORS middleware on the backend. Implemented token refresh logic and automatic redirect to login on 401 errors.',
     learnings: 'Learned about HTTP-only cookies vs localStorage for token storage. Understanding the security implications of each approach.',
     tips: 'Always implement proper error handling for authentication failures. Consider using interceptors for token injection.',
+    gitLink: 'https://github.com/username/project/commit/a1b2c3d4',
     createdAt: '2026-02-18T10:30:00Z',
     updatedAt: '2026-02-18T10:30:00Z',
   },
@@ -21,6 +22,7 @@ let MOCK_DAILY_LOGS: DailyLog[] = [
     solutions: 'Used Bootstrap breakpoint utilities correctly. Applied container-fluid and proper col-* classes for responsive layout.',
     learnings: 'Mastered Bootstrap 5 grid system and utility classes. Learned about the new Bootstrap 5 features compared to v4.',
     tips: 'Test responsiveness early and often. Use browser DevTools device toolbar to check multiple screen sizes.',
+    gitLink: 'https://github.com/username/project/commit/e5f6g7h8',
     createdAt: '2026-02-17T09:15:00Z',
     updatedAt: '2026-02-17T09:15:00Z',
   },
@@ -187,7 +189,8 @@ export const dailyLogService = {
           log.solutions.toLowerCase().includes(keyword) ||
           log.learnings.toLowerCase().includes(keyword) ||
           log.tips.toLowerCase().includes(keyword) ||
-          log.logDate.includes(keyword)
+          log.logDate.includes(keyword) ||
+          (log.gitLink && log.gitLink.toLowerCase().includes(keyword))
         );
       });
     }

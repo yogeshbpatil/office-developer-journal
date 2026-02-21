@@ -51,9 +51,23 @@ export default function DailyLogCard({ log }: DailyLogCardProps) {
         </div>
 
         {log.tips && (
-          <div className="mb-0">
+          <div className="mb-3">
             <h6 className="text-secondary mb-2">💭 Tips & Best Practices</h6>
             <p className="text-body mb-0">{log.tips}</p>
+          </div>
+        )}
+
+        {log.gitLink && (
+          <div className="mb-0">
+            <h6 className="text-primary mb-2">🔗 Git Link</h6>
+            <a 
+              href={log.gitLink} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-decoration-none"
+            >
+              {log.gitLink}
+            </a>
           </div>
         )}
       </div>

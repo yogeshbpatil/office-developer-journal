@@ -17,6 +17,7 @@ export default function DailyLogForm({ onSubmit, initialData, isLoading = false 
     solutions: initialData?.solutions || '',
     learnings: initialData?.learnings || '',
     tips: initialData?.tips || '',
+    gitLink: initialData?.gitLink || '',
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof CreateDailyLogDto, string>>>({});
@@ -182,6 +183,23 @@ export default function DailyLogForm({ onSubmit, initialData, isLoading = false 
         <div className="form-text">Share any helpful tips or recommendations for future reference.</div>
       </div>
 
+      {/* Git Link */}
+      <div className="mb-3">
+        <label htmlFor="gitLink" className="form-label fw-semibold">
+          Git Link
+        </label>
+        <input
+          type="url"
+          className="form-control"
+          id="gitLink"
+          placeholder="https://github.com/username/repo/commit/abc123 (Optional)"
+          value={formData.gitLink}
+          onChange={(e) => handleChange('gitLink', e.target.value)}
+          disabled={isLoading}
+        />
+        <div className="form-text">Add a link to your Git repository, commit, or pull request for future reference.</div>
+      </div>
+
       {/* Submit Button */}
       <div className="d-flex gap-2">
         <button
@@ -209,6 +227,7 @@ export default function DailyLogForm({ onSubmit, initialData, isLoading = false 
               solutions: '',
               learnings: '',
               tips: '',
+              gitLink: '',
             });
             setErrors({});
           }}

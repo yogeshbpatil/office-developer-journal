@@ -6,6 +6,7 @@ export interface DailyLog {
   solutions: string;
   learnings: string;
   tips: string;
+  gitLink?: string; // Git repository or commit link
   createdAt: string; // ISO datetime string
   updatedAt: string; // ISO datetime string
 }
@@ -17,6 +18,7 @@ export interface CreateDailyLogDto {
   solutions: string;
   learnings: string;
   tips: string;
+  gitLink?: string;
 }
 
 export interface SearchFilters {
