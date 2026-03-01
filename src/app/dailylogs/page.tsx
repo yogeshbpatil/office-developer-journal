@@ -11,7 +11,9 @@ export default function DailyLogsPage() {
   const [filteredLogs, setFilteredLogs] = useState<DailyLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState('');
+  const [logToDelete, setLogToDelete] = useState<DailyLog | null>(null);
   
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({
     keyword: '',
@@ -59,6 +61,41 @@ export default function DailyLogsPage() {
     });
     setFilteredLogs(logs);
     setShowFilters(false);
+  };
+
+  const getLogDisplayName = (log: DailyLog): string => {
+    const title = log.tasksWorked?.trim();
+    if (title) {
+      return title.length > 50 ? `${title.slice(0, 50)}...` : title;
+    }
+    return log.logDate;
+  };
+
+  const handleOpenDeleteDialog = (log: DailyLog) => {
+    setError('');
+    setLogToDelete(log);
+  };
+
+  const handleCancelDelete = () => {
+    if (isDeleting) return;
+    setLogToDelete(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!logToDelete) return;
+
+    setError('');
+    setIsDeleting(true);
+    try {
+      await dailyLogService.deleteLog(logToDelete.id);
+      setLogs((prev) => prev.filter((log) => log.id !== logToDelete.id));
+      setFilteredLogs((prev) => prev.filter((log) => log.id !== logToDelete.id));
+      setLogToDelete(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete log');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const hasActiveFilters = searchFilters.keyword || searchFilters.dateFrom || searchFilters.dateTo;
@@ -221,12 +258,62 @@ export default function DailyLogsPage() {
               </div>
 
               {filteredLogs.map((log) => (
-                <DailyLogCard key={log.id} log={log} />
+                <DailyLogCard
+                  key={log.id}
+                  log={log}
+                  onDeleteClick={handleOpenDeleteDialog}
+                  isDeleting={isDeleting && logToDelete?.id === log.id}
+                />
               ))}
             </div>
           </div>
         )}
       </div>
+
+      {logToDelete && (
+        <>
+          <div className="modal d-block" tabIndex={-1} role="dialog" aria-modal="true">
+            <div className="modal-dialog modal-dialog-centered" role="document">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title">Delete Daily Log</h5>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    aria-label="Close"
+                    onClick={handleCancelDelete}
+                    disabled={isDeleting}
+                  ></button>
+                </div>
+                <div className="modal-body">
+                  <p className="mb-0">
+                    Do you really want to delete <strong>{getLogDisplayName(logToDelete)}</strong>?
+                  </p>
+                </div>
+                <div className="modal-footer">
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary"
+                    onClick={handleCancelDelete}
+                    disabled={isDeleting}
+                  >
+                    No
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    onClick={handleConfirmDelete}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? 'Deleting...' : 'Yes'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="modal-backdrop fade show"></div>
+        </>
+      )}
     </ProtectedLayout>
   );
 }
