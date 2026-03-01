@@ -4,9 +4,11 @@ import { DailyLog } from '@/models/DailyLog';
 
 interface DailyLogCardProps {
   log: DailyLog;
+  onDeleteClick?: (log: DailyLog) => void;
+  isDeleting?: boolean;
 }
 
-export default function DailyLogCard({ log }: DailyLogCardProps) {
+export default function DailyLogCard({ log, onDeleteClick, isDeleting = false }: DailyLogCardProps) {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -27,7 +29,17 @@ export default function DailyLogCard({ log }: DailyLogCardProps) {
               Created: {new Date(log.createdAt).toLocaleDateString()}
             </small>
           </div>
-          <span className="badge bg-primary">Log #{log.id}</span>
+          <div className="d-flex align-items-center gap-2">
+            <span className="badge bg-primary">Log #{log.id}</span>
+            <button
+              type="button"
+              className="btn btn-outline-danger btn-sm"
+              onClick={() => onDeleteClick?.(log)}
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </button>
+          </div>
         </div>
 
         <div className="mb-3">
