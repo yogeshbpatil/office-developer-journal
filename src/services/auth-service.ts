@@ -20,7 +20,7 @@ const getErrorMessage = (error: unknown, fallbackMessage: string): string => {
 export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
-      return await apiClient.post<AuthResponse>('/auth/login', credentials);
+      return await apiClient.post<AuthResponse>('/Auth/login', credentials);
     } catch (error) {
       throw new Error(getErrorMessage(error, 'Login failed. Please try again.'));
     }
@@ -36,7 +36,7 @@ export const authService = {
 
   async register(data: RegisterRequest): Promise<RegisterResponse> {
     try {
-      return await apiClient.post<RegisterResponse>('/auth/register', data);
+      return await apiClient.post<RegisterResponse>('/Auth/register', data);
     } catch (error) {
       throw new Error(getErrorMessage(error, 'Registration failed. Please try again.'));
     }
