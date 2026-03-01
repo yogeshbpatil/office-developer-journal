@@ -6,7 +6,8 @@ class ApiClient {
 
   constructor() {
     this.client = axios.create({
-      baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api',
+      baseURL:
+        process.env.NEXT_PUBLIC_API_BASE_URL || 'https://devloggerbackend.onrender.com/api',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -16,7 +17,11 @@ class ApiClient {
     this.client.interceptors.request.use(
       (config) => {
         const token = getToken();
-        if (token && config.headers) {
+        // Do not attach local mock tokens to backend API calls.
+        // They trigger CORS preflight (authorization header) and are not valid JWTs.
+        const shouldAttachAuth = token && !token.startsWith('mock_jwt_token_');
+
+        if (shouldAttachAuth && config.headers) {
           config.headers.Authorization = `Bearer ${token}`;
         }
         return config;

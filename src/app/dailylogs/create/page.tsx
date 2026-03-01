@@ -4,8 +4,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedLayout from '@/components/layouts/ProtectedLayout';
 import DailyLogForm from '@/components/forms/DailyLogForm';
-import { dailyLogService } from '@/services/dailylog-service';
-import { CreateDailyLogDto } from '@/models/DailyLog';
 
 export default function CreateDailyLogPage() {
   const router = useRouter();
@@ -13,24 +11,25 @@ export default function CreateDailyLogPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  const handleSubmit = async (data: CreateDailyLogDto) => {
+  const handleSubmitStart = () => {
     setError('');
     setSuccess(false);
     setIsLoading(true);
+  };
 
-    try {
-      await dailyLogService.createLog(data);
-      setSuccess(true);
-      
-      // Show success message and redirect after a short delay
-      setTimeout(() => {
-        router.push('/dailylogs');
-      }, 1500);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create log');
-    } finally {
-      setIsLoading(false);
-    }
+  const handleSubmitSuccess = () => {
+    setSuccess(true);
+    setIsLoading(false);
+
+    // Show success message and redirect after a short delay
+    setTimeout(() => {
+      router.push('/dailylogs');
+    }, 1500);
+  };
+
+  const handleSubmitError = (message: string) => {
+    setError(message);
+    setIsLoading(false);
   };
 
   return (
@@ -76,7 +75,12 @@ export default function CreateDailyLogPage() {
               </div>
             )}
 
-            <DailyLogForm onSubmit={handleSubmit} isLoading={isLoading} />
+            <DailyLogForm
+              isLoading={isLoading}
+              onSubmitting={handleSubmitStart}
+              onSuccess={handleSubmitSuccess}
+              onError={handleSubmitError}
+            />
 
             <div className="card border-info mb-4">
               <div className="card-body">
