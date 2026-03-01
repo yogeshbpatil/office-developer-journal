@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useEffect, useState, FormEvent } from 'react';
 import { CreateDailyLogDto, DailyLog } from '@/models/DailyLog';
 import { dailyLogService } from '@/services/dailylog-service';
 
 interface DailyLogFormProps {
   initialData?: Partial<CreateDailyLogDto>;
+  mode?: 'create' | 'edit';
+  logId?: string;
   isLoading?: boolean;
   onSubmitting?: () => void;
   onSuccess?: (createdLog: DailyLog) => void;
@@ -14,6 +16,8 @@ interface DailyLogFormProps {
 
 export default function DailyLogForm({
   initialData,
+  mode = 'create',
+  logId,
   isLoading = false,
   onSubmitting,
   onSuccess,
@@ -28,6 +32,20 @@ export default function DailyLogForm({
     tips: initialData?.tips || '',
     gitLink: initialData?.gitLink || '',
   });
+
+  useEffect(() => {
+    setFormData({
+      logDate: initialData?.logDate || new Date().toISOString().split('T')[0],
+      tasksWorked: initialData?.tasksWorked || '',
+      problemsFaced: initialData?.problemsFaced || '',
+      solutions: initialData?.solutions || '',
+      learnings: initialData?.learnings || '',
+      tips: initialData?.tips || '',
+      gitLink: initialData?.gitLink || '',
+    });
+    setErrors({});
+    setSubmitError('');
+  }, [initialData]);
 
   const [errors, setErrors] = useState<Partial<Record<keyof CreateDailyLogDto, string>>>({});
   const [submitError, setSubmitError] = useState('');
@@ -75,11 +93,24 @@ export default function DailyLogForm({
         tips: formData.tips.trim(),
         gitLink: formData.gitLink?.trim() || undefined,
       };
-      const createdLog = await dailyLogService.createLog(payload);
-      onSuccess?.(createdLog);
+      if (mode === 'edit') {
+        if (!logId) {
+          throw new Error('Log ID is required for editing');
+        }
+        const updatedLog = await dailyLogService.updateLog(logId, payload);
+        onSuccess?.(updatedLog);
+      } else {
+        const createdLog = await dailyLogService.createLog(payload);
+        onSuccess?.(createdLog);
+      }
     } catch (error) {
       console.error('Form submission error:', error);
-      const message = error instanceof Error ? error.message : 'Failed to create daily log';
+      const message =
+        error instanceof Error
+          ? error.message
+          : mode === 'edit'
+            ? 'Failed to update daily log'
+            : 'Failed to create daily log';
       setSubmitError(message);
       onError?.(message);
     }
@@ -238,10 +269,10 @@ export default function DailyLogForm({
           {isLoading ? (
             <>
               <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-              Saving...
+              {mode === 'edit' ? 'Updating...' : 'Saving...'}
             </>
           ) : (
-            'Save Daily Log'
+            mode === 'edit' ? 'Update' : 'Save Daily Log'
           )}
         </button>
         <button

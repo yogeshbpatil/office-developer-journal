@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import ProtectedLayout from '@/components/layouts/ProtectedLayout';
+import DailyLogForm from '@/components/forms/DailyLogForm';
 import DailyLogCard from '@/components/ui/DailyLogCard';
 import { dailyLogService } from '@/services/dailylog-service';
 import { DailyLog, SearchFilters } from '@/models/DailyLog';
@@ -12,8 +13,10 @@ export default function DailyLogsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState('');
   const [logToDelete, setLogToDelete] = useState<DailyLog | null>(null);
+  const [logToEdit, setLogToEdit] = useState<DailyLog | null>(null);
   
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({
     keyword: '',
@@ -96,6 +99,33 @@ export default function DailyLogsPage() {
     } finally {
       setIsDeleting(false);
     }
+  };
+
+  const handleOpenEditDialog = (log: DailyLog) => {
+    setError('');
+    setLogToEdit(log);
+  };
+
+  const handleCancelEdit = () => {
+    if (isUpdating) return;
+    setLogToEdit(null);
+  };
+
+  const handleEditSubmitting = () => {
+    setError('');
+    setIsUpdating(true);
+  };
+
+  const handleEditSuccess = (updatedLog: DailyLog) => {
+    setLogs((prev) => prev.map((log) => (log.id === updatedLog.id ? updatedLog : log)));
+    setFilteredLogs((prev) => prev.map((log) => (log.id === updatedLog.id ? updatedLog : log)));
+    setLogToEdit(null);
+    setIsUpdating(false);
+  };
+
+  const handleEditError = (message: string) => {
+    setError(message);
+    setIsUpdating(false);
   };
 
   const hasActiveFilters = searchFilters.keyword || searchFilters.dateFrom || searchFilters.dateTo;
@@ -261,7 +291,9 @@ export default function DailyLogsPage() {
                 <DailyLogCard
                   key={log.id}
                   log={log}
+                  onEditClick={handleOpenEditDialog}
                   onDeleteClick={handleOpenDeleteDialog}
+                  isEditing={isUpdating && logToEdit?.id === log.id}
                   isDeleting={isDeleting && logToDelete?.id === log.id}
                 />
               ))}
@@ -307,6 +339,47 @@ export default function DailyLogsPage() {
                   >
                     {isDeleting ? 'Deleting...' : 'Yes'}
                   </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="modal-backdrop fade show"></div>
+        </>
+      )}
+
+      {logToEdit && (
+        <>
+          <div className="modal d-block" tabIndex={-1} role="dialog" aria-modal="true">
+            <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title">Edit Daily Log</h5>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    aria-label="Close"
+                    onClick={handleCancelEdit}
+                    disabled={isUpdating}
+                  ></button>
+                </div>
+                <div className="modal-body">
+                  <DailyLogForm
+                    mode="edit"
+                    logId={logToEdit.id}
+                    initialData={{
+                      logDate: logToEdit.logDate,
+                      tasksWorked: logToEdit.tasksWorked,
+                      problemsFaced: logToEdit.problemsFaced,
+                      solutions: logToEdit.solutions,
+                      learnings: logToEdit.learnings,
+                      tips: logToEdit.tips || '',
+                      gitLink: logToEdit.gitLink || '',
+                    }}
+                    isLoading={isUpdating}
+                    onSubmitting={handleEditSubmitting}
+                    onSuccess={handleEditSuccess}
+                    onError={handleEditError}
+                  />
                 </div>
               </div>
             </div>
