@@ -17,11 +17,7 @@ class ApiClient {
     this.client.interceptors.request.use(
       (config) => {
         const token = getToken();
-        // Do not attach local mock tokens to backend API calls.
-        // They trigger CORS preflight (authorization header) and are not valid JWTs.
-        const shouldAttachAuth = token && !token.startsWith('mock_jwt_token_');
-
-        if (shouldAttachAuth && config.headers) {
+        if (token && config.headers) {
           config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
