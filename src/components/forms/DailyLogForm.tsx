@@ -1,15 +1,24 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
-import { CreateDailyLogDto } from '@/models/DailyLog';
+import { CreateDailyLogDto, DailyLog } from '@/models/DailyLog';
+import { dailyLogService } from '@/services/dailylog-service';
 
 interface DailyLogFormProps {
-  onSubmit: (data: CreateDailyLogDto) => Promise<void>;
   initialData?: Partial<CreateDailyLogDto>;
   isLoading?: boolean;
+  onSubmitting?: () => void;
+  onSuccess?: (createdLog: DailyLog) => void;
+  onError?: (message: string) => void;
 }
 
-export default function DailyLogForm({ onSubmit, initialData, isLoading = false }: DailyLogFormProps) {
+export default function DailyLogForm({
+  initialData,
+  isLoading = false,
+  onSubmitting,
+  onSuccess,
+  onError,
+}: DailyLogFormProps) {
   const [formData, setFormData] = useState<CreateDailyLogDto>({
     logDate: initialData?.logDate || new Date().toISOString().split('T')[0],
     tasksWorked: initialData?.tasksWorked || '',
@@ -21,6 +30,7 @@ export default function DailyLogForm({ onSubmit, initialData, isLoading = false 
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof CreateDailyLogDto, string>>>({});
+  const [submitError, setSubmitError] = useState('');
 
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof CreateDailyLogDto, string>> = {};
@@ -56,10 +66,22 @@ export default function DailyLogForm({ onSubmit, initialData, isLoading = false 
       return;
     }
 
+    setSubmitError('');
+    onSubmitting?.();
+
     try {
-      await onSubmit(formData);
+      const payload: CreateDailyLogDto = {
+        ...formData,
+        tips: formData.tips.trim(),
+        gitLink: formData.gitLink?.trim() || undefined,
+      };
+      const createdLog = await dailyLogService.createLog(payload);
+      onSuccess?.(createdLog);
     } catch (error) {
       console.error('Form submission error:', error);
+      const message = error instanceof Error ? error.message : 'Failed to create daily log';
+      setSubmitError(message);
+      onError?.(message);
     }
   };
 
@@ -81,6 +103,12 @@ export default function DailyLogForm({ onSubmit, initialData, isLoading = false 
 
   return (
     <form onSubmit={handleSubmit} className="form-section">
+      {submitError && (
+        <div className="alert alert-danger" role="alert">
+          {submitError}
+        </div>
+      )}
+
       {/* Log Date */}
       <div className="mb-3">
         <label htmlFor="logDate" className="form-label fw-semibold">
