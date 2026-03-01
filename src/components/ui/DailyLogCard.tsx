@@ -4,11 +4,19 @@ import { DailyLog } from '@/models/DailyLog';
 
 interface DailyLogCardProps {
   log: DailyLog;
+  onEditClick?: (log: DailyLog) => void;
   onDeleteClick?: (log: DailyLog) => void;
+  isEditing?: boolean;
   isDeleting?: boolean;
 }
 
-export default function DailyLogCard({ log, onDeleteClick, isDeleting = false }: DailyLogCardProps) {
+export default function DailyLogCard({
+  log,
+  onEditClick,
+  onDeleteClick,
+  isEditing = false,
+  isDeleting = false,
+}: DailyLogCardProps) {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -33,9 +41,17 @@ export default function DailyLogCard({ log, onDeleteClick, isDeleting = false }:
             <span className="badge bg-primary">Log #{log.id}</span>
             <button
               type="button"
+              className="btn btn-outline-primary btn-sm"
+              onClick={() => onEditClick?.(log)}
+              disabled={isEditing || isDeleting}
+            >
+              {isEditing ? 'Editing...' : 'Edit'}
+            </button>
+            <button
+              type="button"
               className="btn btn-outline-danger btn-sm"
               onClick={() => onDeleteClick?.(log)}
-              disabled={isDeleting}
+              disabled={isDeleting || isEditing}
             >
               {isDeleting ? 'Deleting...' : 'Delete'}
             </button>
