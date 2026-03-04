@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedLayout from '@/components/layouts/ProtectedLayout';
-import DailyLogForm from '@/components/forms/DailyLogForm';
+import StandupForm from '@/components/forms/StandupForm';
 
-export default function CreateDailyLogPage() {
+export default function CreateStandupPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -23,7 +23,7 @@ export default function CreateDailyLogPage() {
 
     // Show success message and redirect after a short delay
     setTimeout(() => {
-      router.push('/dailylogs');
+      router.push('/standups');
     }, 1500);
   };
 
@@ -44,15 +44,15 @@ export default function CreateDailyLogPage() {
                     <a href="/dashboard">Dashboard</a>
                   </li>
                   <li className="breadcrumb-item">
-                    <a href="/dailylogs">Daily Logs</a>
+                    <a href="/standups">Standups</a>
                   </li>
                   <li className="breadcrumb-item active" aria-current="page">
                     Create
                   </li>
                 </ol>
               </nav>
-              <h1 className="heading-1">Create Daily Log ✏️</h1>
-              <p className="text-secondary">Document your daily development activities, challenges, and learnings</p>
+              <h1 className="heading-1">Create Standup ✏️</h1>
+              <p className="text-secondary">Document your daily standup discussion, plans, and blockers</p>
             </div>
           </div>
 
@@ -72,11 +72,11 @@ export default function CreateDailyLogPage() {
 
               {success && (
                 <div className="alert alert-success" role="alert">
-                  <strong>Success!</strong> Your daily log has been created. Redirecting...
+                  <strong>Success!</strong> Your standup has been created. Redirecting...
                 </div>
               )}
 
-              <DailyLogForm
+              <StandupForm
                 isLoading={isLoading}
                 onSubmitting={handleSubmitStart}
                 onSuccess={handleSubmitSuccess}
@@ -85,13 +85,13 @@ export default function CreateDailyLogPage() {
 
               <div className="card border-info mb-4">
                 <div className="card-body">
-                  <h6 className="card-title text-info">💡 Tips for Effective Logging</h6>
+                  <h6 className="card-title text-info">💡 Tips for Effective Standups</h6>
                   <ul className="mb-0 text-small">
-                    <li>Be specific about the tasks you worked on</li>
-                    <li>Document problems as soon as they occur for better recall</li>
-                    <li>Include technical details in your solutions</li>
-                    <li>Reflect on what you learned and how it applies to future work</li>
-                    <li>Share practical tips that your future self (or teammates) might find useful</li>
+                    <li>Be specific about what you accomplished yesterday</li>
+                    <li>Clearly state what you plan to do today</li>
+                    <li>Document any blockers as soon as they arise</li>
+                    <li>Set realistic targets that can be completed in a day</li>
+                    <li>Add notes for follow-ups or additional context</li>
                   </ul>
                 </div>
               </div>

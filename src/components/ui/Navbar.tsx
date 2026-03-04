@@ -56,20 +56,63 @@ export default function Navbar() {
                 Dashboard
               </Link>
             </li>
-            <li className="nav-item">
-              <Link href="/dailylogs" className={`nav-link ${isActive('/dailylogs')}`}>
+            <li className="nav-item dropdown">
+              <a
+                className={`nav-link dropdown-toggle ${isActive('/dailylogs') ? 'active' : ''}`}
+                href="#"
+                id="dailylogsDropdown"
+                role="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
                 Daily Logs
-              </Link>
+              </a>
+              <ul className="dropdown-menu" aria-labelledby="dailylogsDropdown">
+                <li>
+                  <Link href="/dailylogs" className="dropdown-item">
+                    View Logs
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/dailylogs/create" className="dropdown-item">
+                    Create Log
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/dailylogs/search" className="dropdown-item">
+                    Search
+                  </Link>
+                </li>
+              </ul>
             </li>
-            <li className="nav-item">
-              <Link href="/dailylogs/create" className={`nav-link ${isActive('/dailylogs/create')}`}>
-                Create Log
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link href="/dailylogs/search" className={`nav-link ${isActive('/dailylogs/search')}`}>
-                Search
-              </Link>
+            <li className="nav-item dropdown">
+              <a
+                className={`nav-link dropdown-toggle ${isActive('/standups') ? 'active' : ''}`}
+                href="#"
+                id="standupsDropdown"
+                role="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                Standups
+              </a>
+              <ul className="dropdown-menu" aria-labelledby="standupsDropdown">
+                <li>
+                  <Link href="/standups" className="dropdown-item">
+                    View Standups
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/standups/create" className="dropdown-item">
+                    Create Standup
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/standups/search" className="dropdown-item">
+                    Search
+                  </Link>
+                </li>
+              </ul>
             </li>
           </ul>
           

@@ -2,17 +2,17 @@
 
 import { useState, FormEvent } from 'react';
 import ProtectedLayout from '@/components/layouts/ProtectedLayout';
-import DailyLogCard from '@/components/ui/DailyLogCard';
-import { dailyLogService } from '@/services/dailylog-service';
-import { DailyLog, SearchFilters } from '@/models/DailyLog';
+import StandupCard from '@/components/ui/StandupCard';
+import { standupService } from '@/services/standup-service';
+import { Standup, SearchFilters } from '@/models/Standup';
 
-export default function SearchDailyLogsPage() {
+export default function SearchStandupsPage() {
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({
     keyword: '',
     dateFrom: '',
     dateTo: '',
   });
-  const [results, setResults] = useState<DailyLog[]>([]);
+  const [results, setResults] = useState<Standup[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState('');
@@ -24,7 +24,7 @@ export default function SearchDailyLogsPage() {
     setHasSearched(true);
 
     try {
-      const searchResults = await dailyLogService.searchLogs(searchFilters);
+      const searchResults = await standupService.searchStandups(searchFilters);
       setResults(searchResults);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Search failed');
@@ -56,15 +56,15 @@ export default function SearchDailyLogsPage() {
                   <a href="/dashboard">Dashboard</a>
                 </li>
                 <li className="breadcrumb-item">
-                  <a href="/dailylogs">Daily Logs</a>
+                  <a href="/standups">Standups</a>
                 </li>
                 <li className="breadcrumb-item active" aria-current="page">
                   Search
                 </li>
               </ol>
             </nav>
-            <h1 className="heading-1">Search Logs 🔍</h1>
-            <p className="text-secondary">Find specific entries by keyword or date range</p>
+            <h1 className="heading-1">Search Standups 🔍</h1>
+            <p className="text-secondary">Find specific standup entries by keyword or date range</p>
           </div>
         </div>
 
@@ -90,7 +90,7 @@ export default function SearchDailyLogsPage() {
                     }
                   />
                   <div className="form-text">
-                    Search across tasks, problems, solutions, learnings, and tips
+                    Search across discussion points, today's plan, blockers, targets, and notes
                   </div>
                 </div>
 
@@ -125,7 +125,7 @@ export default function SearchDailyLogsPage() {
                   />
                 </div>
 
-                {/* Action Buttons */}
+                {/* Search Buttons */}
                 <div className="d-grid gap-2">
                   <button
                     type="submit"
@@ -134,15 +134,11 @@ export default function SearchDailyLogsPage() {
                   >
                     {isLoading ? (
                       <>
-                        <span
-                          className="spinner-border spinner-border-sm me-2"
-                          role="status"
-                          aria-hidden="true"
-                        ></span>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                         Searching...
                       </>
                     ) : (
-                      '🔍 Search'
+                      'Search'
                     )}
                   </button>
                   <button
@@ -151,70 +147,44 @@ export default function SearchDailyLogsPage() {
                     onClick={handleClear}
                     disabled={isLoading}
                   >
-                    Clear Filters
+                    Clear
                   </button>
                 </div>
               </form>
             </div>
-
-            {/* Search Tips */}
-            <div className="card border-info mt-3">
-              <div className="card-body">
-                <h6 className="card-title text-info">💡 Search Tips</h6>
-                <ul className="mb-0 text-small">
-                  <li>Use specific keywords for better results</li>
-                  <li>Date filters help narrow down entries</li>
-                  <li>Search is case-insensitive</li>
-                  <li>Leave fields empty to show all logs</li>
-                </ul>
-              </div>
-            </div>
           </div>
 
+          {/* Search Results */}
           <div className="col-lg-8 col-xl-9">
             {error && (
-              <div className="alert alert-danger" role="alert">
-                {error}
+              <div className="alert alert-danger alert-dismissible fade show" role="alert">
+                <strong>Error:</strong> {error}
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setError('')}
+                  aria-label="Close"
+                ></button>
               </div>
             )}
 
-            {isLoading ? (
+            {!hasSearched ? (
               <div className="text-center py-5">
-                <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden">Searching...</span>
-                </div>
-                <p className="text-muted mt-3">Searching your logs...</p>
+                <p className="text-muted">Enter search criteria and click Search to find standups</p>
               </div>
-            ) : hasSearched ? (
-              <>
-                <div className="d-flex justify-content-between align-items-center mb-3">
-                  <h5 className="mb-0">
-                    {results.length === 0
-                      ? 'No results found'
-                      : `Found ${results.length} log${results.length !== 1 ? 's' : ''}`}
-                  </h5>
-                </div>
-
-                {results.length === 0 ? (
-                  <div className="empty-state">
-                    <div className="empty-state-icon">🔍</div>
-                    <h3 className="empty-state-text">No matching logs</h3>
-                    <p className="text-muted">
-                      Try adjusting your search filters or keywords
-                    </p>
-                  </div>
-                ) : (
-                  results.map((log) => <DailyLogCard key={log.id} log={log} />)
-                )}
-              </>
+            ) : results.length === 0 ? (
+              <div className="text-center py-5">
+                <p className="text-muted">No standups found matching your criteria</p>
+              </div>
             ) : (
-              <div className="empty-state">
-                <div className="empty-state-icon">🔍</div>
-                <h3 className="empty-state-text">Start Searching</h3>
-                <p className="text-muted">
-                  Use the filters on the left to search through your daily logs
+              <>
+                <p className="text-muted mb-3">
+                  Found {results.length} result{results.length !== 1 ? 's' : ''}
                 </p>
-              </div>
+                {results.map((standup) => (
+                  <StandupCard key={standup.id} standup={standup} />
+                ))}
+              </>
             )}
           </div>
         </div>
