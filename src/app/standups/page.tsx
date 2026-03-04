@@ -66,6 +66,14 @@ export default function StandupsPage() {
     setShowFilters(false);
   };
 
+  const getStandupDisplayName = (standup: Standup): string => {
+    const title = standup.todayPlan?.trim();
+    if (title) {
+      return title.length > 50 ? `${title.slice(0, 50)}...` : title;
+    }
+    return standup.standupDate;
+  };
+
   const handleOpenDeleteDialog = (standup: Standup) => {
     setError('');
     setStandupToDelete(standup);
@@ -93,258 +101,235 @@ export default function StandupsPage() {
     }
   };
 
-  const handleEditSuccess = () => {
+  const handleOpenEditDialog = (standup: Standup) => {
+    setError('');
+    setStandupToEdit(standup);
+  };
+
+  const handleCancelEdit = () => {
+    if (isUpdating) return;
     setStandupToEdit(null);
-    // Refresh standups
-    standupService.getAllStandups().then((data) => {
-      setStandups(data);
-      setFilteredStandups(data);
-    });
+  };
+
+  const handleEditSubmitting = () => {
+    setError('');
+    setIsUpdating(true);
+  };
+
+  const handleEditSuccess = (updatedStandup: Standup) => {
+    setStandups((prev) => prev.map((s) => (s.id === updatedStandup.id ? updatedStandup : s)));
+    setFilteredStandups((prev) => prev.map((s) => (s.id === updatedStandup.id ? updatedStandup : s)));
+    setStandupToEdit(null);
+    setIsUpdating(false);
   };
 
   const handleEditError = (message: string) => {
     setError(message);
+    setIsUpdating(false);
   };
+
+  const hasActiveFilters = searchFilters.keyword || searchFilters.dateFrom || searchFilters.dateTo;
 
   return (
     <ProtectedLayout>
       <div className="container">
-        {/* Page Header */}
         <div className="row mb-4">
           <div className="col-12">
             <h1 className="heading-1">Daily Standups 📋</h1>
-            <p className="text-secondary">Track your daily standup discussions, plans, and blockers</p>
+            <p className="text-secondary">View all your standup entries</p>
           </div>
         </div>
 
         {/* Search Section */}
-        <div className="row mb-4">
-          <div className="col-12">
-            <div className="card border-info">
-              <div className="card-body">
-                <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                  <h5 className="heading-4 mb-0">Search Standups</h5>
+        <div className="card mb-4">
+          <div className="card-body">
+            <div className="row g-3">
+              <div className="col-12">
+                <div className="input-group">
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Search standups by keyword..."
+                    value={searchFilters.keyword}
+                    onChange={(e) =>
+                      setSearchFilters({ ...searchFilters, keyword: e.target.value })
+                    }
+                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                  />
                   <button
+                    className="btn btn-outline-secondary"
                     type="button"
-                    className="btn btn-outline-info btn-sm"
                     onClick={() => setShowFilters(!showFilters)}
                   >
-                    {showFilters ? 'Hide Filters' : 'Show Filters'}
+                    🔍 {showFilters ? 'Hide' : 'Show'} Filters
                   </button>
-                </div>
-
-                <div className="row g-3">
-                  {/* Keyword Search */}
-                  <div className="col-12">
-                    <label htmlFor="keyword" className="form-label">
-                      Keyword Search
-                    </label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="keyword"
-                      placeholder="Search in all fields..."
-                      value={searchFilters.keyword}
-                      onChange={(e) =>
-                        setSearchFilters((prev) => ({ ...prev, keyword: e.target.value }))
-                      }
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          handleSearch();
-                        }
-                      }}
-                    />
-                    <div className="form-text">
-                      Search across discussion points, today's plan, blockers, targets, and notes
-                    </div>
-                  </div>
-
-                  {/* Date Range - Shown when filters expanded */}
-                  {showFilters && (
-                    <>
-                      <div className="col-md-6">
-                        <label htmlFor="dateFrom" className="form-label">
-                          Date From
-                        </label>
-                        <input
-                          type="date"
-                          className="form-control"
-                          id="dateFrom"
-                          value={searchFilters.dateFrom}
-                          onChange={(e) =>
-                            setSearchFilters((prev) => ({ ...prev, dateFrom: e.target.value }))
-                          }
-                        />
-                      </div>
-                      <div className="col-md-6">
-                        <label htmlFor="dateTo" className="form-label">
-                          Date To
-                        </label>
-                        <input
-                          type="date"
-                          className="form-control"
-                          id="dateTo"
-                          value={searchFilters.dateTo}
-                          onChange={(e) =>
-                            setSearchFilters((prev) => ({ ...prev, dateTo: e.target.value }))
-                          }
-                        />
-                      </div>
-                    </>
+                  <button
+                    className="btn btn-primary"
+                    type="button"
+                    onClick={handleSearch}
+                    disabled={isSearching}
+                  >
+                    {isSearching ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Searching...
+                      </>
+                    ) : (
+                      'Search'
+                    )}
+                  </button>
+                  {hasActiveFilters && (
+                    <button
+                      className="btn btn-outline-danger"
+                      type="button"
+                      onClick={handleClearSearch}
+                    >
+                      Clear
+                    </button>
                   )}
-
-                  {/* Search Buttons */}
-                  <div className="col-12">
-                    <div className="d-flex gap-2 flex-wrap">
-                      <button
-                        type="button"
-                        className="btn btn-primary"
-                        onClick={handleSearch}
-                        disabled={isSearching}
-                      >
-                        {isSearching ? (
-                          <>
-                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                            Searching...
-                          </>
-                        ) : (
-                          'Search'
-                        )}
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-outline-secondary"
-                        onClick={handleClearSearch}
-                        disabled={isSearching}
-                      >
-                        Clear
-                      </button>
-                    </div>
-                  </div>
                 </div>
               </div>
+
+              {/* Advanced Filters */}
+              {showFilters && (
+                <>
+                  <div className="col-md-6">
+                    <label htmlFor="dateFrom" className="form-label fw-semibold">
+                      Date From
+                    </label>
+                    <input
+                      type="date"
+                      className="form-control"
+                      id="dateFrom"
+                      value={searchFilters.dateFrom}
+                      onChange={(e) =>
+                        setSearchFilters({ ...searchFilters, dateFrom: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="col-md-6">
+                    <label htmlFor="dateTo" className="form-label fw-semibold">
+                      Date To
+                    </label>
+                    <input
+                      type="date"
+                      className="form-control"
+                      id="dateTo"
+                      value={searchFilters.dateTo}
+                      onChange={(e) =>
+                        setSearchFilters({ ...searchFilters, dateTo: e.target.value })
+                      }
+                    />
+                  </div>
+                </>
+              )}
             </div>
+
+            {hasActiveFilters && (
+              <div className="mt-3">
+                <small className="text-muted">
+                  Active filters: 
+                  {searchFilters.keyword && <span className="badge bg-secondary ms-2">Keyword: {searchFilters.keyword}</span>}
+                  {searchFilters.dateFrom && <span className="badge bg-secondary ms-2">From: {searchFilters.dateFrom}</span>}
+                  {searchFilters.dateTo && <span className="badge bg-secondary ms-2">To: {searchFilters.dateTo}</span>}
+                </small>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Error Message */}
         {error && (
-          <div className="alert alert-danger alert-dismissible fade show" role="alert">
-            <strong>Error:</strong> {error}
-            <button
-              type="button"
-              className="btn-close"
-              onClick={() => setError('')}
-              aria-label="Close"
-            ></button>
+          <div className="alert alert-danger" role="alert">
+            {error}
           </div>
         )}
 
-        {/* Loading State */}
         {isLoading ? (
           <div className="text-center py-5">
             <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Loading...</span>
+              <span className="visually-hidden">Loading standups...</span>
             </div>
-            <p className="mt-2 text-muted">Loading standups...</p>
+            <p className="text-muted mt-3">Loading your standups...</p>
+          </div>
+        ) : filteredStandups.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-state-icon">📋</div>
+            <h3 className="empty-state-text">
+              {hasActiveFilters ? 'No standups found matching your search' : 'No standups found'}
+            </h3>
+            <p className="text-muted">
+              {hasActiveFilters
+                ? 'Try adjusting your search filters or clearing them to see all standups.'
+                : "You haven't created any standups yet. Start documenting your daily standups!"}
+            </p>
+            {hasActiveFilters ? (
+              <button onClick={handleClearSearch} className="btn btn-primary mt-3">
+                Clear Filters
+              </button>
+            ) : (
+              <a href="/standups/create" className="btn btn-primary mt-3">
+                Create Your First Standup
+              </a>
+            )}
           </div>
         ) : (
-          <>
-            {/* Results Count */}
-            <div className="row mb-3">
-              <div className="col-12">
+          <div className="row">
+            <div className="col-12">
+              <div className="d-flex justify-content-between align-items-center mb-3">
                 <p className="text-muted mb-0">
-                  Showing {filteredStandups.length} of {standups.length} standup{standups.length !== 1 ? 's' : ''}
+                  Showing <strong>{filteredStandups.length}</strong> standup{filteredStandups.length !== 1 ? 's' : ''}
+                  {hasActiveFilters && standups.length !== filteredStandups.length && (
+                    <span> (filtered from {standups.length} total)</span>
+                  )}
                 </p>
-              </div>
-            </div>
-
-            {/* Standup Cards */}
-            {filteredStandups.length === 0 ? (
-              <div className="text-center py-5">
-                <p className="text-muted">No standups found. Create your first standup!</p>
-                <a href="/standups/create" className="btn btn-primary">
-                  Create Standup
+                <a href="/standups/create" className="btn btn-primary btn-sm">
+                  ➕ Create New Standup
                 </a>
               </div>
-            ) : (
-              <div className="row">
-                <div className="col-12">
-                  {filteredStandups.map((standup) => (
-                    <StandupCard
-                      key={standup.id}
-                      standup={standup}
-                      onEditClick={setStandupToEdit}
-                      onDeleteClick={handleOpenDeleteDialog}
-                      isEditing={isUpdating}
-                      isDeleting={isDeleting}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
-        )}
 
-        {/* Edit Modal */}
-        {standupToEdit && (
-          <div className="modal show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-            <div className="modal-dialog modal-lg modal-dialog-centered">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h5 className="modal-title">Edit Standup</h5>
-                  <button
-                    type="button"
-                    className="btn-close"
-                    onClick={() => setStandupToEdit(null)}
-                    disabled={isUpdating}
-                  ></button>
-                </div>
-                <div className="modal-body">
-                  <StandupForm
-                    initialData={standupToEdit}
-                    mode="edit"
-                    standupId={standupToEdit.id}
-                    isLoading={isUpdating}
-                    onSubmitting={() => {
-                      setError('');
-                      setIsUpdating(true);
-                    }}
-                    onSuccess={handleEditSuccess}
-                    onError={handleEditError}
-                  />
-                </div>
-              </div>
+              {filteredStandups.map((standup) => (
+                <StandupCard
+                  key={standup.id}
+                  standup={standup}
+                  onEditClick={handleOpenEditDialog}
+                  onDeleteClick={handleOpenDeleteDialog}
+                  isEditing={isUpdating && standupToEdit?.id === standup.id}
+                  isDeleting={isDeleting && standupToDelete?.id === standup.id}
+                />
+              ))}
             </div>
           </div>
         )}
+      </div>
 
-        {/* Delete Confirmation Modal */}
-        {standupToDelete && (
-          <div className="modal show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-            <div className="modal-dialog modal-dialog-centered">
+      {standupToDelete && (
+        <>
+          <div className="modal d-block" tabIndex={-1} role="dialog" aria-modal="true">
+            <div className="modal-dialog modal-dialog-centered" role="document">
               <div className="modal-content">
                 <div className="modal-header">
-                  <h5 className="modal-title">Confirm Delete</h5>
+                  <h5 className="modal-title">Delete Standup</h5>
                   <button
                     type="button"
                     className="btn-close"
+                    aria-label="Close"
                     onClick={handleCancelDelete}
                     disabled={isDeleting}
                   ></button>
                 </div>
                 <div className="modal-body">
-                  <p>Are you sure you want to delete the standup from {standupToDelete.standupDate}?</p>
-                  <p className="text-muted">This action cannot be undone.</p>
+                  <p className="mb-0">
+                    Do you really want to delete the standup from <strong>{getStandupDisplayName(standupToDelete)}</strong>?
+                  </p>
                 </div>
                 <div className="modal-footer">
                   <button
                     type="button"
-                    className="btn btn-secondary"
+                    className="btn btn-outline-secondary"
                     onClick={handleCancelDelete}
                     disabled={isDeleting}
                   >
-                    Cancel
+                    No
                   </button>
                   <button
                     type="button"
@@ -352,21 +337,55 @@ export default function StandupsPage() {
                     onClick={handleConfirmDelete}
                     disabled={isDeleting}
                   >
-                    {isDeleting ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                        Deleting...
-                      </>
-                    ) : (
-                      'Delete'
-                    )}
+                    {isDeleting ? 'Deleting...' : 'Yes'}
                   </button>
                 </div>
               </div>
             </div>
           </div>
-        )}
-      </div>
+          <div className="modal-backdrop fade show"></div>
+        </>
+      )}
+
+      {standupToEdit && (
+        <>
+          <div className="modal d-block" tabIndex={-1} role="dialog" aria-modal="true">
+            <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title">Edit Standup</h5>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    aria-label="Close"
+                    onClick={handleCancelEdit}
+                    disabled={isUpdating}
+                  ></button>
+                </div>
+                <div className="modal-body">
+                  <StandupForm
+                    mode="edit"
+                    standupId={standupToEdit.id}
+                    initialData={{
+                      standupDate: standupToEdit.standupDate,
+                      discussionPoints: standupToEdit.discussionPoints,
+                      todayPlan: standupToEdit.todayPlan,
+                      blockers: standupToEdit.blockers,
+                      targets: standupToEdit.targets,
+                      notes: standupToEdit.notes || '',
+                    }}
+                    isLoading={isUpdating}
+                    onSubmitting={handleEditSubmitting}
+                    onSuccess={handleEditSuccess}
+                    onError={handleEditError}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="modal-backdrop fade show"></div>
+        </>
+      )}
     </ProtectedLayout>
   );
 }
