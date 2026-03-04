@@ -43,7 +43,8 @@ export default function DashboardPage() {
 
   return (
     <ProtectedLayout>
-      <div className="container">
+      <div className="container-fluid py-4" style={{ backgroundColor: '#f0f9f0', minHeight: '100vh' }}>
+        <div className="container">
         {/* Welcome Section */}
         <div className="row mb-4">
           <div className="col-12">
@@ -171,6 +172,7 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
+        </div>
         </div>
       </div>
     </ProtectedLayout>

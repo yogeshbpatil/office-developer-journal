@@ -46,7 +46,8 @@ export default function SearchStandupsPage() {
 
   return (
     <ProtectedLayout>
-      <div className="container">
+      <div className="container-fluid py-4" style={{ backgroundColor: '#f0f9f0', minHeight: '100vh' }}>
+        <div className="container">
         <div className="row mb-4">
           <div className="col-12">
             <nav aria-label="breadcrumb">
@@ -186,6 +187,7 @@ export default function SearchStandupsPage() {
               </>
             )}
           </div>
+        </div>
         </div>
       </div>
     </ProtectedLayout>
