@@ -132,7 +132,8 @@ export default function StandupsPage() {
 
   return (
     <ProtectedLayout>
-      <div className="container">
+      <div className="container-fluid py-4" style={{ backgroundColor: '#f0f9f0', minHeight: '100vh' }}>
+        <div className="container">
         <div className="row mb-4">
           <div className="col-12">
             <h1 className="heading-1">Daily Standups 📋</h1>
@@ -301,6 +302,7 @@ export default function StandupsPage() {
           </div>
         )}
       </div>
+    </div>
 
       {standupToDelete && (
         <>
