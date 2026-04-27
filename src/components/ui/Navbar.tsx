@@ -2,19 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { getCurrentUser, logout } from '@/lib/auth';
 import { User } from '@/models/User';
 
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    const currentUser = getCurrentUser();
-    setUser(currentUser);
-  }, []);
+  const [user, setUser] = useState<User | null>(() => getCurrentUser());
 
   const handleLogout = () => {
     logout();
@@ -31,7 +26,7 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+    <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-sm app-navbar">
       <div className="container-fluid">
         <Link href="/dashboard" className="navbar-brand fw-bold text-primary">
           📝 Developer Journal
