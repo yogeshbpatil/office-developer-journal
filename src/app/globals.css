@@ -193,6 +193,18 @@ a {
   padding: var(--spacing-lg) 0;
 }
 
+.app-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1035;
+}
+
+.app-main-with-navbar {
+  padding-top: calc(72px + var(--spacing-lg));
+}
+
 .section-title {
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
@@ -319,6 +331,10 @@ a {
   
   .page-container {
     padding: var(--spacing-md) 0;
+  }
+
+  .app-main-with-navbar {
+    padding-top: calc(72px + var(--spacing-md));
   }
   
   .auth-card {
