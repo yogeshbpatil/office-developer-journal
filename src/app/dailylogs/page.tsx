@@ -136,8 +136,13 @@ export default function DailyLogsPage() {
         <div className="container">
           <div className="row mb-4">
             <div className="col-12">
-              <h1 className="heading-1">Daily Logs 📋</h1>
-              <p className="text-secondary">View all your developer journal entries</p>
+              <h1
+                className="heading-1"
+                style={{ fontSize: '2.25rem', lineHeight: 1.1, marginBottom: '0.25rem' }}
+              >
+                Daily Logs 📋
+              </h1>
+              <p className="text-secondary mb-0">View all your developer journal entries</p>
             </div>
           </div>
 
@@ -391,3 +396,4 @@ export default function DailyLogsPage() {
     </ProtectedLayout>
   );
 }
+

@@ -51,8 +51,13 @@ export default function CreateDailyLogPage() {
                   </li>
                 </ol>
               </nav>
-              <h1 className="heading-1">Create Daily Log ✏️</h1>
-              <p className="text-secondary">Document your daily development activities, challenges, and learnings</p>
+              <h1
+                className="heading-1"
+                style={{ fontSize: '2.25rem', lineHeight: 1.1, marginBottom: '0.25rem' }}
+              >
+                Create Daily Log ✏️
+              </h1>
+              <p className="text-secondary mb-0">Document your daily development activities, challenges, and learnings</p>
             </div>
           </div>
 
@@ -102,3 +107,4 @@ export default function CreateDailyLogPage() {
     </ProtectedLayout>
   );
 }
+
