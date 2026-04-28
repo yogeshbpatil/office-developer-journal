@@ -63,8 +63,13 @@ export default function SearchDailyLogsPage() {
                 </li>
               </ol>
             </nav>
-            <h1 className="heading-1">Search Logs 🔍</h1>
-            <p className="text-secondary">Find specific entries by keyword or date range</p>
+            <h1
+              className="heading-1"
+              style={{ fontSize: '2.25rem', lineHeight: 1.1, marginBottom: '0.25rem' }}
+            >
+              Search Logs 🔍
+            </h1>
+            <p className="text-secondary mb-0">Find specific entries by keyword or date range</p>
           </div>
         </div>
 
