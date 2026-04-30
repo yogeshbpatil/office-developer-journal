@@ -56,41 +56,57 @@ export default function DashboardPage() {
         {/* Stats Cards */}
         <div className="row g-4 mb-5">
           <div className="col-md-3">
-            <div className="card card-elevated text-center">
-              <div className="card-body">
-                <div className="display-4 text-primary mb-2">📊</div>
-                <h3 className="heading-3">{isLoading ? '...' : recentLogs.length}</h3>
-                <p className="text-muted mb-0">Total Logs</p>
+            <div className="card card-elevated">
+              <div className="card-body d-flex align-items-center">
+                <div className="me-3">
+                  <div className="fs-4 text-primary">📊</div>
+                </div>
+                <div>
+                  <h6 className="mb-1 text-muted">Total Logs</h6>
+                  <h3 className="mb-0">{isLoading ? '...' : recentLogs.length}</h3>
+                </div>
               </div>
             </div>
           </div>
 
           <div className="col-md-3">
-            <div className="card card-elevated text-center">
-              <div className="card-body">
-                <div className="display-4 text-success mb-2">✅</div>
-                <h3 className="heading-3">{isLoading ? '...' : recentLogs.length}</h3>
-                <p className="text-muted mb-0">Tasks Completed</p>
+            <div className="card card-elevated">
+              <div className="card-body d-flex align-items-center">
+                <div className="me-3">
+                  <div className="fs-4 text-success">✅</div>
+                </div>
+                <div>
+                  <h6 className="mb-1 text-muted">Tasks Completed</h6>
+                  <h3 className="mb-0">{isLoading ? '...' : recentLogs.length}</h3>
+                </div>
               </div>
             </div>
           </div>
 
           <div className="col-md-3">
-            <div className="card card-elevated text-center">
-              <div className="card-body">
-                <div className="display-4 text-warning mb-2">💡</div>
-                <h3 className="heading-3">{isLoading ? '...' : recentLogs.length}</h3>
-                <p className="text-muted mb-0">Learnings</p>
+            <div className="card card-elevated">
+              <div className="card-body d-flex align-items-center">
+                <div className="me-3">
+                  <div className="fs-4 text-warning">💡</div>
+                </div>
+                <div>
+                  <h6 className="mb-1 text-muted">Learnings</h6>
+                  <h3 className="mb-0">{isLoading ? '...' : recentLogs.length}</h3>
+                </div>
               </div>
             </div>
           </div>
 
           <div className="col-md-3">
-            <div className="card card-elevated text-center">
-              <div className="card-body">
-                <div className="display-4 text-info mb-2">🔍</div>
-                <h3 className="heading-3">{isLoading ? '...' : recentLogs.length}</h3>
-                <p className="text-muted mb-0">Solutions Found</p>
+            <div className="card card-elevated">
+              <div className="card-body d-flex align-items-center">
+                <div className="me-3">
+                  <div className="fs-4 text-info">🔍</div>
+                </div>
+                <div>
+                  <h6 className="mb-1 text-muted">Solutions Found</h6>
+                  <h3 className="mb-0">{isLoading ? '...' : recentLogs.length}</h3>
+                </div>
               </div>
             </div>
           </div>
