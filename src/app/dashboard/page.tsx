@@ -57,12 +57,13 @@ export default function DashboardPage() {
         <div className="row g-4 mb-5">
           <div className="col-md-3">
             <div className="card card-elevated">
-              <div className="card-body d-flex align-items-center">
-                <div className="me-3">
+              <div className="card-body d-flex align-items-center justify-content-between">
+                <div className="d-flex align-items-center me-3">
                   <div className="fs-4 text-primary">📊</div>
                 </div>
-                <div>
-                  <h6 className="mb-1 text-muted">Total Logs</h6>
+                <div className="text-end d-flex align-items-baseline gap-2">
+                  <h6 className="mb-0 text-muted">Total Logs</h6>
+                  <span className="text-muted">:</span>
                   <h3 className="mb-0">{isLoading ? '...' : recentLogs.length}</h3>
                 </div>
               </div>
@@ -71,12 +72,13 @@ export default function DashboardPage() {
 
           <div className="col-md-3">
             <div className="card card-elevated">
-              <div className="card-body d-flex align-items-center">
-                <div className="me-3">
+              <div className="card-body d-flex align-items-center justify-content-between">
+                <div className="d-flex align-items-center me-3">
                   <div className="fs-4 text-success">✅</div>
                 </div>
-                <div>
-                  <h6 className="mb-1 text-muted">Tasks Completed</h6>
+                <div className="text-end d-flex align-items-baseline gap-2">
+                  <h6 className="mb-0 text-muted">Tasks Completed</h6>
+                  <span className="text-muted">:</span>
                   <h3 className="mb-0">{isLoading ? '...' : recentLogs.length}</h3>
                 </div>
               </div>
@@ -85,12 +87,13 @@ export default function DashboardPage() {
 
           <div className="col-md-3">
             <div className="card card-elevated">
-              <div className="card-body d-flex align-items-center">
-                <div className="me-3">
+              <div className="card-body d-flex align-items-center justify-content-between">
+                <div className="d-flex align-items-center me-3">
                   <div className="fs-4 text-warning">💡</div>
                 </div>
-                <div>
-                  <h6 className="mb-1 text-muted">Learnings</h6>
+                <div className="text-end d-flex align-items-baseline gap-2">
+                  <h6 className="mb-0 text-muted">Learnings</h6>
+                  <span className="text-muted">:</span>
                   <h3 className="mb-0">{isLoading ? '...' : recentLogs.length}</h3>
                 </div>
               </div>
@@ -99,12 +102,13 @@ export default function DashboardPage() {
 
           <div className="col-md-3">
             <div className="card card-elevated">
-              <div className="card-body d-flex align-items-center">
-                <div className="me-3">
+              <div className="card-body d-flex align-items-center justify-content-between">
+                <div className="d-flex align-items-center me-3">
                   <div className="fs-4 text-info">🔍</div>
                 </div>
-                <div>
-                  <h6 className="mb-1 text-muted">Solutions Found</h6>
+                <div className="text-end d-flex align-items-baseline gap-2">
+                  <h6 className="mb-0 text-muted">Solutions Found</h6>
+                  <span className="text-muted">:</span>
                   <h3 className="mb-0">{isLoading ? '...' : recentLogs.length}</h3>
                 </div>
               </div>
