@@ -61,18 +61,6 @@ export default function DailyLogForm({
       newErrors.tasksWorked = 'Tasks worked is required';
     }
 
-    if (!formData.problemsFaced.trim()) {
-      newErrors.problemsFaced = 'Problems faced is required';
-    }
-
-    if (!formData.solutions.trim()) {
-      newErrors.solutions = 'Solutions is required';
-    }
-
-    if (!formData.learnings.trim()) {
-      newErrors.learnings = 'Learnings is required';
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -90,6 +78,9 @@ export default function DailyLogForm({
     try {
       const payload: CreateDailyLogDto = {
         ...formData,
+        problemsFaced: formData.problemsFaced.trim(),
+        solutions: formData.solutions.trim(),
+        learnings: formData.learnings.trim(),
         tips: formData.tips.trim(),
         gitLink: formData.gitLink?.trim() || undefined,
       };
@@ -177,52 +168,49 @@ export default function DailyLogForm({
       {/* Problems Faced */}
       <div className="mb-3">
         <label htmlFor="problemsFaced" className="form-label fw-semibold">
-          Problems Faced <span className="text-danger">*</span>
+          Problems Faced
         </label>
         <textarea
-          className={`form-control ${errors.problemsFaced ? 'is-invalid' : ''}`}
+          className="form-control"
           id="problemsFaced"
           rows={4}
-          placeholder="What challenges or issues did you encounter?"
+          placeholder="What challenges or issues did you encounter? (Optional)"
           value={formData.problemsFaced}
           onChange={(e) => handleChange('problemsFaced', e.target.value)}
           disabled={isLoading}
         />
-        {errors.problemsFaced && <div className="invalid-feedback">{errors.problemsFaced}</div>}
       </div>
 
       {/* Solutions */}
       <div className="mb-3">
         <label htmlFor="solutions" className="form-label fw-semibold">
-          Solutions <span className="text-danger">*</span>
+          Solutions
         </label>
         <textarea
-          className={`form-control ${errors.solutions ? 'is-invalid' : ''}`}
+          className="form-control"
           id="solutions"
           rows={4}
-          placeholder="How did you solve the problems?"
+          placeholder="How did you solve the problems? (Optional)"
           value={formData.solutions}
           onChange={(e) => handleChange('solutions', e.target.value)}
           disabled={isLoading}
         />
-        {errors.solutions && <div className="invalid-feedback">{errors.solutions}</div>}
       </div>
 
       {/* Learnings */}
       <div className="mb-3">
         <label htmlFor="learnings" className="form-label fw-semibold">
-          Learnings <span className="text-danger">*</span>
+          Learnings
         </label>
         <textarea
-          className={`form-control ${errors.learnings ? 'is-invalid' : ''}`}
+          className="form-control"
           id="learnings"
           rows={4}
-          placeholder="What did you learn today?"
+          placeholder="What did you learn today? (Optional)"
           value={formData.learnings}
           onChange={(e) => handleChange('learnings', e.target.value)}
           disabled={isLoading}
         />
-        {errors.learnings && <div className="invalid-feedback">{errors.learnings}</div>}
       </div>
 
       {/* Tips */}
