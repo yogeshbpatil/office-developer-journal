@@ -5,13 +5,14 @@ import Navbar from '@/components/ui/Navbar';
 
 interface ProtectedLayoutProps {
   children: React.ReactNode;
+  fullPage?: boolean;
 }
 
-export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
+export default function ProtectedLayout({ children, fullPage = false }: ProtectedLayoutProps) {
   return (
     <AuthGuard>
       <Navbar />
-      <main className="page-container app-main-with-navbar">
+      <main className={`page-container app-main-with-navbar${fullPage ? ' notes-main' : ''}`}>
         {children}
       </main>
     </AuthGuard>

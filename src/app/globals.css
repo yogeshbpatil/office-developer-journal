@@ -205,6 +205,29 @@ a {
   padding-top: calc(72px + var(--spacing-lg));
 }
 
+.notes-main {
+  height: 100vh;
+  padding: 56px 0 0;
+  overflow: hidden;
+}
+
+.notes-editor {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: clamp(1rem, 3vw, 2.5rem);
+  resize: none;
+  border: 0;
+  outline: 0;
+  background: #fffdf5;
+  color: var(--text-primary);
+  font: 1.05rem/1.75 var(--font-family-sans);
+}
+
+.notes-editor:focus {
+  box-shadow: inset 0 0 0 2px rgba(13, 110, 253, 0.18);
+}
+
 .section-title {
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
@@ -335,6 +358,10 @@ a {
 
   .app-main-with-navbar {
     padding-top: calc(72px + var(--spacing-md));
+  }
+
+  .notes-main {
+    padding: 56px 0 0;
   }
   
   .auth-card {

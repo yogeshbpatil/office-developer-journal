@@ -80,34 +80,10 @@ export default function Navbar() {
                 </li>
               </ul>
             </li>
-            <li className="nav-item dropdown">
-              <a
-                className={`nav-link dropdown-toggle ${isActive('/standups') ? 'active' : ''}`}
-                href="#"
-                id="standupsDropdown"
-                role="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-              >
-                Standups
-              </a>
-              <ul className="dropdown-menu" aria-labelledby="standupsDropdown">
-                <li>
-                  <Link href="/standups" className="dropdown-item">
-                    View Standups
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/standups/create" className="dropdown-item">
-                    Create Standup
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/standups/search" className="dropdown-item">
-                    Search
-                  </Link>
-                </li>
-              </ul>
+            <li className="nav-item">
+              <Link href="/notes" className={`nav-link ${isActive('/notes')}`}>
+                Notes
+              </Link>
             </li>
           </ul>
           
