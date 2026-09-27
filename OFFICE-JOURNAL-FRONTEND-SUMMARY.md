@@ -1117,3 +1117,81 @@ This section documents the four newly analyzed files without removing or replaci
 - Clearing site data, changing browser/profile/origin, or manually deleting the `journal-form-practice:<userId>` key removes saved entries; the next read then shows seed entries again.
 - Because the service is browser-only, importing or invoking it during server rendering would fail. Its current caller is correctly marked as a client component and invokes the service after mount or from event handlers.
 - Recommended future improvements include runtime schema validation, storage versioning/migration, cross-tab synchronization, tests for validation and CRUD, an ID fallback if older browsers matter, and backend persistence if data must be secure or available across devices.
+
+## 13. Notes Board UI and Multi-Note Compatibility Update
+
+This section supersedes the earlier single-textarea Notes description. The Notes feature now presents multiple sticky-note cards and a large selected-note editor while continuing to use only the existing `GET /Notes` and `PUT /Notes` endpoints.
+
+### Existing Endpoint Compatibility
+
+- The backend still exposes one note resource shaped as `{ id, content, updatedAtUtc }`.
+- No new create, list, update-by-ID, or delete endpoint was added or assumed.
+- Multiple frontend notes are stored as a versioned JSON document inside the existing `content` string.
+- The JSON document uses `format: "developer-journal-notes-board"`, `version: 1`, and a `notes` array.
+- Frontend create, update, and delete operations modify that array and persist the complete document through the existing `PUT /Notes` request.
+- Existing plain-text content is not discarded. The parser converts it into one yellow sticky note named `Imported note`; it is written in board format after the user next changes the board.
+- Empty existing content produces an empty board.
+- A failed initial GET cannot trigger an empty PUT because the page now enables autosave only after a successful load.
+
+### Updated `src/models/Note.ts`
+
+- The original backend `Note` interface remains unchanged.
+- `NOTE_COLORS` defines the supported sticky colors: yellow, peach, mint, blue, and lavender.
+- `NoteColor` derives a string-literal union from that constant.
+- `StickyNote` defines client-side note ID, title, content, color, pinned state, creation time, and update time.
+- `NotesBoard` defines the versioned document stored in the backend note's `content` property.
+- These board types are frontend persistence contracts; they do not require matching backend database columns.
+
+### Updated `src/services/note-service.ts`
+
+- Existing `getNote()` and `saveNote(content)` methods remain available and still call `GET /Notes` and `PUT /Notes`.
+- `parseNotesBoard(content)` safely recognizes the marked version-1 board format.
+- Parsed entries are normalized so missing optional client fields get safe defaults; malformed array entries without string IDs are dropped.
+- Unrecognized JSON is treated as legacy text instead of being destroyed.
+- `serializeNotesBoard(board)` converts the board to the string accepted by the current endpoint.
+- `getNotesBoard()` loads the backend note and returns a parsed board.
+- `saveNotesBoard(board)` serializes the board, saves it through the existing endpoint, and parses the returned content.
+- IDs use `crypto.randomUUID()` when available and a timestamp/random fallback otherwise.
+
+### Updated `src/app/notes/page.tsx`
+
+- The route remains `/notes`, stays protected by `ProtectedLayout`, and retains full-page mode.
+- A left-side library displays multiple small sticky cards. Clicking a card opens it in the large editor.
+- `New note` creates an empty note, selects it, clears search, and queues autosave.
+- Users can give each note a title up to 100 characters and edit unrestricted text content.
+- Search filters by both title and content without changing persisted data.
+- Pinned notes sort before unpinned notes; each group sorts by most recently updated.
+- Five color choices update both the small card and large editor appearance.
+- Delete uses a confirmation dialog, removes the selected note, and selects the next available note.
+- Empty, loading, and no-search-results states are handled separately.
+- The editor shows word count and the note's formatted update timestamp.
+- Autosave is debounced by 650 milliseconds.
+- Saves are serialized through a promise queue so rapid edits do not intentionally launch parallel PUT operations.
+- Save status reports loading, saving, saved, and error states through an `aria-live` region.
+- The last loaded/saved serialization is tracked to avoid redundant requests.
+- A mounted-state guard prevents async completions from updating an unmounted component.
+
+### Updated Notes Styling in `src/app/globals.css`
+
+- The Notes page now uses a two-column desktop layout: a compact card library and a large editor workspace.
+- Sticky cards have color variants, short previews, active/focus outlines, subtle rotation, hover elevation, and timestamps.
+- The large sheet matches the selected color and contains a toolbar, color swatches, title field, content editor, and metadata footer.
+- The save indicator is a floating status pill with distinct neutral, saving, saved, and error colors.
+- At tablet/mobile widths the layout becomes a single column with the card library above the editor.
+- On very small screens the card grid becomes one column and editor controls stack vertically.
+- Labels, pressed states, visible focus states, live status, semantic sections, and empty-state messaging support keyboard and assistive-technology use.
+
+### Notes CRUD Flow With the Existing API
+
+| User action | Frontend behavior | Backend request |
+| --- | --- | --- |
+| Load notes | Parse the single content string into a board | `GET /Notes` |
+| Create note | Add a `StickyNote` to the board array | Debounced `PUT /Notes` with serialized board |
+| Read/select note | Select a local card and show its large editor | None |
+| Update title/content/color/pin | Replace fields in the selected array item | Debounced `PUT /Notes` with serialized board |
+| Delete note | Remove the selected array item after confirmation | Debounced `PUT /Notes` with serialized board |
+| Search notes | Filter the loaded array in browser memory | None |
+
+### Important Constraint
+
+- This design works with the existing endpoint as long as the backend/database permits a sufficiently large `content` value and returns the saved content unchanged. Because the entire board is one backend record, there is no server-side per-sticky-note querying, independent authorization, partial update, or conflict detection. A dedicated multi-note backend would be preferable if the board becomes large or needs collaborative editing.
