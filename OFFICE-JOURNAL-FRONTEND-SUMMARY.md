@@ -843,3 +843,363 @@ The frontend defines the following contract types:
 - The service layer is mixed: some features are backend-backed while others are mock-only.
 - There is no actual database code in this repository, so database documentation must be interpreted as future backend work.
 - The current UI is functional, but auth and persistence should be hardened before any production use.
+
+## 12. Form Practice Feature and Related File Analysis
+
+This section documents the four newly analyzed files without removing or replacing any earlier project summary. It also updates the earlier Navbar description: the current Navbar includes a `Form Practice` link to `/form-practice` in addition to Dashboard, Daily Logs, and Notes.
+
+### Feature Overview
+
+- Purpose: provide an authenticated practice screen that demonstrates common HTML form controls and supports creating, viewing, searching, selecting, editing, and deleting practice records.
+- Route: `/form-practice`.
+- Persistence: browser `localStorage`, scoped by the authenticated user's ID.
+- Backend/API use: none. This feature does not use Axios, `apiClient`, an HTTP endpoint, or a database.
+- Main dependency flow: `Navbar` links to the route; `FormPracticePage` reads the signed-in user, uses the `PracticeEntry` types, and calls `practiceEntryService`; the service persists typed entries in `localStorage`.
+- Authentication boundary: the page is wrapped in `ProtectedLayout`. It also requires `getCurrentUser()?.id` before it loads or saves data.
+
+### File Interaction Map
+
+1. `src/components/ui/Navbar.tsx` exposes the `/form-practice` navigation link on authenticated screens.
+2. Next.js maps `src/app/form-practice/page.tsx` to the `/form-practice` URL.
+3. `FormPracticePage` gets the active user ID from `src/lib/auth.ts`.
+4. The page uses `PracticeEntry` for stored rows and `PracticeEntryInput` for create/update payloads.
+5. `practiceEntryService` reads and writes the key `journal-form-practice:<userId>` in browser `localStorage`.
+6. Successful CRUD calls update both persistent storage and the page's React state, causing the table to re-render immediately.
+
+### [src/app/form-practice/page.tsx](<D:/Personal/Office Dialy General Task/Front-End/office-developer-journal/src/app/form-practice/page.tsx>)
+
+- Purpose: route component, form controller, validation layer, search/list controller, and CRUD user interface for the Form Practice feature.
+- Route and rendering mode: the file defines `/form-practice` and begins with `'use client'` because it uses React hooks, browser storage indirectly, `window`, DOM refs, confirmation dialogs, and `crypto` indirectly through the service.
+- Default export: `FormPracticePage`.
+- Imported code:
+  - `FormEvent`, `useEffect`, `useRef`, and `useState` from React.
+  - `ProtectedLayout` for authenticated page structure.
+  - `getCurrentUser` for the signed-in user's ID.
+  - `PracticeEntry` and `PracticeEntryInput` for type-safe page state and service payloads.
+  - `practiceEntryService` for local CRUD operations.
+
+#### Local Types and Constants
+
+- `PracticeForm`: derived from `PracticeEntryInput` with `hours` changed from `number` to `string`. Keeping the input as a string allows the controlled number field to be empty while the user is typing; submission converts it to a number.
+- `emptyForm`: the initial and reset state for every form control. Text/date fields start empty, `completed` starts `false`, and `rating` starts at `0` so the user must choose a rating.
+- `categories`: fixed select options: Development, Design, Testing, Documentation, and Other.
+- `assignees`: suggestions for the datalist autocomplete: Alex, Sam, Taylor, and Jordan. The input is still free text, so these are suggestions rather than enforced values.
+
+#### Component State and Refs
+
+- `userId`: current authenticated user identifier. It is also the namespace used by the storage service.
+- `entries`: complete in-memory list shown by the page.
+- `form`: controlled values for all form fields.
+- `editingId`: `null` while creating or the target entry ID while editing. It changes headings and submit/cancel button labels and decides whether submission calls `create` or `update`.
+- `selectedIds`: a `Set<string>` containing table rows selected for bulk deletion.
+- `listSearch`: current case-insensitive list filter text.
+- `message`: success feedback rendered with `role="status"`.
+- `error`: validation/load/save/delete feedback rendered with `role="alert"`.
+- `fileInput`: direct reference used to clear the browser file input, which cannot be fully controlled like a text input.
+- `formHeading`: heading reference used to scroll smoothly back to the editor after the user selects an entry to edit.
+
+#### Initial Load
+
+- A mount-only `useEffect` schedules its work with `window.setTimeout(..., 0)` and clears that timer during cleanup.
+- The callback reads `getCurrentUser()?.id`. If no ID exists, it exits without loading entries.
+- With a valid ID, it stores the ID in state and calls `practiceEntryService.list(id)`.
+- Load failures display `Could not load practice entries from this browser.`.
+- The timeout defers the state updates until after the immediate effect execution. The protected layout remains the primary authentication guard.
+
+#### Search and Selection Derivations
+
+- `visibleEntries` is calculated on every render from `entries` and `listSearch`.
+- Search trims and lowercases the query and checks `title`, `reference`, `description`, `category`, and `assignee` with substring matching.
+- An empty trimmed query matches every entry because every string includes the empty string.
+- `hours`, `dueDate`, `rating`, status, filename, and timestamps are not searchable.
+- `allVisibleSelected` is true only when at least one filtered row exists and every visible row ID is selected.
+- Selection can span rows, but changing the search text intentionally resets `selectedIds` to an empty set.
+
+#### Form Helper Functions
+
+- `updateField(field, value)`: generic type-safe updater for any `PracticeForm` property; it also clears the current error.
+- `clearForm()`: restores `emptyForm`, exits edit mode, clears the native file input, and clears errors. It does not clear a success message.
+- `handleSubmit(event)`: prevents native form submission, validates and normalizes input, calls create/update, updates the entries state, displays success text, and resets the editor.
+- `editEntry(entry)`: copies every editable property into the controlled form, records the entry ID, clears feedback, resets the physical file input, and scrolls the form heading into view.
+- `deleteEntries(ids)`: confirms the action, calls the service, removes deleted rows from local state, resets selection, exits edit mode if its target was deleted, and reports singular or plural success text.
+- `toggleSelected(id)`: clones the current `Set` before adding or removing one ID, preserving React's immutable-state update pattern.
+- `toggleAllVisible()`: selects all currently filtered rows or removes all visible rows from the selection while leaving any non-visible selections unchanged.
+
+#### Submission Validation and Normalization
+
+- Required by component validation: nonblank title, due date, category, nonblank hours, numeric finite hours from 0 through 100, and rating of at least 1.
+- Required by native HTML attributes: title, hours, category, and due date. The rating buttons require the explicit component check because they are not native required inputs.
+- `hours` uses a numeric input with `min="0"`, `max="100"`, and `step="0.5"`; the submit handler converts its string value using `Number`.
+- Maximum lengths: title 120, reference 100, description 1000, and assignee 80 characters.
+- Before persistence, title, reference, description, and assignee are trimmed. Category, due date, filename, completion state, and rating are used as selected.
+- Failed validation shows `Complete the required fields and choose a rating from 1 to 5.`.
+- The service is called only when a user ID is available; otherwise the page asks the user to sign in again.
+- Create success prepends the returned row to state. Update success replaces the matching row while retaining list order.
+
+#### Form Controls Demonstrated
+
+- Text input: required title.
+- Number input: required hours.
+- Search input: optional reference keyword.
+- Select: required category.
+- Textarea: optional description.
+- Text input plus `datalist`: optional assignee autocomplete.
+- Date input: required due date.
+- File input: optional attachment selection.
+- Rating control: five ordinary buttons with `aria-pressed`; the selected rating highlights that star and every star before it.
+- Checkbox: completion status.
+- Submit and reset/cancel buttons whose wording changes between create and edit modes.
+- Important file behavior: only `File.name` is copied into `fileName`; file bytes, MIME type, path, and upload data are never stored or transmitted. Selecting a file does not upload it.
+
+#### Saved Entries Table
+
+- Displays a total count based on all entries, not only filtered entries.
+- Provides bulk delete with a live selected count and disables the button when nothing is selected.
+- Provides select-all for currently visible entries and one checkbox per row.
+- Columns: selection, entry details, category, hours, due date, rating, status, and actions.
+- Entry details show title, assignee or `Unassigned`, optional reference, and an expandable `<details>` area for description and saved attachment name.
+- Status is presented as a green `Completed` badge or gray `Open` badge.
+- Each row has Edit and Delete buttons.
+- Empty-state wording distinguishes an entirely empty list from a search that has no matches.
+
+#### Accessibility and Responsive Behavior
+
+- Sections use `aria-labelledby` and stable heading IDs.
+- Feedback uses status/alert roles.
+- Rating buttons expose an accessible star count and pressed state.
+- Selection inputs have contextual `aria-label` values, and rating cells expose `x out of 5 stars`.
+- Form labels are connected to inputs through `htmlFor`/`id`.
+- Bootstrap's responsive grid changes paired controls from half-width columns to full width on smaller screens.
+- The table is wrapped in `.table-responsive` to allow horizontal scrolling on narrow viewports.
+
+#### Dependencies, Usage, and Limitations
+
+- Depends on: React, `ProtectedLayout`, `src/lib/auth.ts`, `src/models/PracticeEntry.ts`, `src/services/practice-entry-service.ts`, Bootstrap classes, and browser APIs.
+- Used by: Next.js directly as the `/form-practice` route; reached through the Navbar link.
+- No network request, API client, server action, database query, or upload endpoint is involved.
+- Search and CRUD operations are synchronous and local to the browser.
+- The page catches storage/service errors but displays generalized messages rather than the original error details.
+- The list is not explicitly sorted after load; service storage order is used. Newly created items are prepended, while edits retain position.
+- There is no schema validation for older or manually modified stored JSON beyond checking that the parsed root is an array.
+
+### [src/components/ui/Navbar.tsx](<D:/Personal/Office Dialy General Task/Front-End/office-developer-journal/src/components/ui/Navbar.tsx>) — Current Form Practice Integration
+
+- Purpose in this feature: makes `/form-practice` discoverable from every authenticated page that renders `ProtectedLayout`.
+- The current code adds a `Form Practice` `Link` after Notes.
+- Active-state behavior for this link uses an exact comparison: `pathname === '/form-practice'` produces `nav-link active`; otherwise it produces `nav-link`.
+- Because the feature currently has only one route, exact matching is sufficient. A future nested route such as `/form-practice/create` would not be marked active without changing this logic.
+- The link uses Next.js `Link`, so navigation is a client-side route transition rather than a forced full document reload.
+
+#### Complete Navbar Behavior Relevant to the Four-File Flow
+
+- `'use client'` is required for navigation hooks, local state, browser auth helpers, and click handling.
+- `usePathname` supplies the current URL for active link classes.
+- `useRouter` is used to navigate to `/login` after logout.
+- User state is lazily initialized with `getCurrentUser()` so stored auth data is read when the component initializes.
+- If no user exists, the component returns `null`, so neither Form Practice nor any other navigation is shown.
+- `handleLogout` clears auth data through `logout`, sets the Navbar user state to `null`, and pushes `/login`.
+- `isActive` applies exact active matching to the regular Dashboard and Notes links. Daily Logs has a dropdown, although its top-level active comparison currently matches only `/dailylogs`, not its create/search subroutes.
+- Bootstrap's collapse and dropdown data attributes depend on the client-loaded Bootstrap JavaScript bundle.
+- Depends on: `next/link`, `next/navigation`, React state, `src/lib/auth.ts`, `src/models/User.ts`, Bootstrap styling/behavior, and indirectly `BootstrapClient`.
+- Used by: `ProtectedLayout`, and therefore all authenticated feature pages including Form Practice.
+
+### [src/models/PracticeEntry.ts](<D:/Personal/Office Dialy General Task/Front-End/office-developer-journal/src/models/PracticeEntry.ts>)
+
+- Purpose: compile-time data contract shared by the page and local persistence service.
+- `PracticeEntry` represents a complete stored record.
+- Field definitions:
+  - `id: string`: unique record identifier generated during creation.
+  - `title: string`: required entry name.
+  - `hours: number`: normalized numeric effort value.
+  - `reference: string`: optional-style searchable keyword stored as a string, including an empty string when omitted.
+  - `description: string`: details text, also stored as an empty string when omitted.
+  - `category: string`: selected category label.
+  - `assignee: string`: free-text assignee, possibly empty.
+  - `completed: boolean`: open/completed flag.
+  - `dueDate: string`: HTML date value in `YYYY-MM-DD` form.
+  - `fileName: string`: filename only; it is not a file or URL.
+  - `rating: number`: page-generated value from 1 through 5 for valid newly submitted data.
+  - `createdAt: string`: ISO timestamp assigned on creation.
+  - `updatedAt: string`: ISO timestamp assigned on creation and refreshed on update.
+- `PracticeEntryInput` uses `Omit<PracticeEntry, 'id' | 'createdAt' | 'updatedAt'>`, ensuring callers supply business fields while the service owns identity and timestamps.
+- The interfaces do not perform runtime validation and do not exist after TypeScript compilation.
+- The model has no `userId` field because user ownership is represented by the per-user storage key rather than duplicated in each entry.
+- Depends on: TypeScript only.
+- Used by: `src/app/form-practice/page.tsx` and `src/services/practice-entry-service.ts`.
+
+### [src/services/practice-entry-service.ts](<D:/Personal/Office Dialy General Task/Front-End/office-developer-journal/src/services/practice-entry-service.ts>)
+
+- Purpose: synchronous browser-local repository/service for Form Practice entries.
+- Exports: singleton-style `practiceEntryService` object with `list`, `create`, `update`, and `delete` methods.
+- Depends on: `PracticeEntry`, `PracticeEntryInput`, `window.localStorage`, `JSON`, `Date`, `crypto.randomUUID`, and `Set`.
+- Used by: `src/app/form-practice/page.tsx`.
+- It deliberately does not import `apiClient`; therefore none of its operations reach the backend.
+
+#### Seed Data
+
+- `seedEntries` contains two complete examples: `sample-1` (`Review dashboard layout`) and `sample-2` (`Try a new API request`).
+- The examples demonstrate populated and empty optional values, completed/open states, decimal hours, filenames, ratings, and ISO timestamps.
+- Seed records are returned only when the per-user storage key is completely absent (`getItem` returns `null`).
+- Seed entries are shallow-cloned before being returned so callers do not receive the exact module-level seed objects.
+- The initial seed list is not automatically written to storage. The first create, update, or delete operation writes the resulting list.
+- An intentionally stored empty array remains empty and does not cause seed data to reappear.
+
+#### Storage Key and User Isolation
+
+- `storageKey(userId)` produces `journal-form-practice:<userId>`.
+- Each user ID therefore gets an independent entry array in the same browser origin.
+- This is client-side namespacing, not a security boundary: a user with browser developer tools or injected script can inspect or modify all localStorage keys.
+- Logout does not remove these practice-entry keys, so data remains in the browser and reappears when the same user ID signs in again.
+- Storage remains specific to the browser profile, device, protocol, host, and port; it does not synchronize across devices.
+
+#### Private `read` and `write` Helpers
+
+- `read(userId)` gets the user-specific JSON string.
+- When no value exists, it returns shallow copies of both seed entries.
+- When a value exists, it parses JSON into `unknown`, checks only `Array.isArray`, and casts the array to `PracticeEntry[]`.
+- Invalid JSON and parse failures are converted to an empty array rather than propagated.
+- Valid JSON with malformed entry objects passes through because there is no per-field runtime schema validation.
+- `write(userId, entries)` serializes the complete array and replaces the storage value with `localStorage.setItem`.
+- `localStorage` quota/security errors from `getItem` or `setItem` can propagate to the page, where the surrounding CRUD/load handlers show user-friendly error messages.
+
+#### CRUD Methods
+
+- `list(userId)`: returns `read(userId)` with no additional sorting, filtering, or mutation.
+- `create(userId, input)`:
+  - Generates one ISO timestamp for both `createdAt` and `updatedAt`.
+  - Generates the ID with `crypto.randomUUID()`.
+  - Builds a complete `PracticeEntry` from the input plus service-owned fields.
+  - Prepends the new record to the currently read list and writes the full list.
+  - Returns the created record for immediate UI insertion.
+- `update(userId, id, input)`:
+  - Reads the current list and finds the requested ID.
+  - Throws `The entry could not be found.` if the ID is absent.
+  - Merges the existing entry, then all input fields, then a fresh `updatedAt`; this preserves `id` and `createdAt`.
+  - Replaces only the matching array item, writes the full array, and returns the updated record.
+- `delete(userId, ids)`:
+  - Converts IDs to a `Set` for efficient membership tests.
+  - Reads the list, filters out all selected IDs, and writes the remaining array.
+  - Unknown IDs are ignored, so deleting them is effectively a no-op apart from rewriting storage.
+  - Supports both single-row and bulk deletion through the same method.
+
+#### Service Characteristics and Risks
+
+- Calls are synchronous, so there are no promises, loading requests, retries, cancellation, or network error types.
+- Every mutation performs a read-modify-write of the complete entry array. This is simple but becomes slower and consumes more memory as the list grows.
+- Concurrent edits in multiple tabs can overwrite one another because there is no locking, version check, merge strategy, or `storage` event synchronization.
+- `crypto.randomUUID()` requires a compatible browser and secure context in normal web usage; there is no fallback ID generator.
+- Client clocks determine timestamps, so they are not authoritative server audit values.
+- No storage migration/versioning exists if the entry shape changes later.
+- No sanitization is performed in the service. React safely escapes values in ordinary JSX rendering, but future raw HTML rendering would require separate protection.
+
+### End-to-End Execution Flow for Form Practice
+
+1. An authenticated user selects `Form Practice` in `Navbar`.
+2. Next.js performs a client-side transition to `/form-practice` and mounts `FormPracticePage` within `ProtectedLayout`.
+3. The mount effect reads the user from browser auth storage and obtains the user ID.
+4. `practiceEntryService.list(userId)` reads `journal-form-practice:<userId>`; absent storage produces cloned seed entries.
+5. The page stores the entries in React state and renders the searchable table.
+6. The user changes controlled inputs; `updateField` updates `form` state.
+7. Submission prevents a page reload, validates required values, converts hours to a number, trims selected strings, and creates a `PracticeEntryInput`.
+8. Create or update writes the complete user-scoped array to localStorage and returns the resulting entry.
+9. The page mirrors the result into `entries`, resets the editor, shows success feedback, and re-renders.
+10. Search filters the in-memory array only; it does not alter persisted data.
+11. Edit copies one stored entry back into the form. Delete confirms first, removes one or many IDs from storage, and synchronizes page state.
+
+### Data Lifecycle and CRUD Matrix
+
+| Operation | UI entry point | Service method | Persistent effect | Page-state effect |
+| --- | --- | --- | --- | --- |
+| Read | Page mount | `list(userId)` | None | Replaces `entries` with stored or seeded data |
+| Create | `Save entry` | `create(userId, input)` | Prepends and stores a new UUID/timestamped entry | Prepends returned entry |
+| Update | `Edit` then `Save changes` | `update(userId, id, input)` | Replaces matching entry and refreshes `updatedAt` | Replaces matching row in place |
+| Delete one | Row `Delete` | `delete(userId, [id])` | Removes matching ID after confirmation | Filters matching row |
+| Delete many | `Delete selected` | `delete(userId, ids)` | Removes every selected ID after confirmation | Filters rows and clears selection |
+| Search | Search saved entries | None | None | Derives `visibleEntries` without changing `entries` |
+
+### Important Maintenance Notes
+
+- The earlier sections that list application routes, frontend models, services, CRUD behavior, and features should now be read together with this section; the Form Practice route, `PracticeEntry` model, and localStorage service are additional current project elements.
+- `PracticeEntry` is a frontend persisted object but not a database entity in this repository.
+- Form Practice differs from Daily Logs and Notes because it never contacts the backend, and it differs from Standups because it survives refreshes through localStorage.
+- Clearing site data, changing browser/profile/origin, or manually deleting the `journal-form-practice:<userId>` key removes saved entries; the next read then shows seed entries again.
+- Because the service is browser-only, importing or invoking it during server rendering would fail. Its current caller is correctly marked as a client component and invokes the service after mount or from event handlers.
+- Recommended future improvements include runtime schema validation, storage versioning/migration, cross-tab synchronization, tests for validation and CRUD, an ID fallback if older browsers matter, and backend persistence if data must be secure or available across devices.
+
+## 13. Notes Board UI and Multi-Note Compatibility Update
+
+This section supersedes the earlier single-textarea Notes description. The Notes feature now presents multiple sticky-note cards and a large selected-note editor while continuing to use only the existing `GET /Notes` and `PUT /Notes` endpoints.
+
+### Existing Endpoint Compatibility
+
+- The backend still exposes one note resource shaped as `{ id, content, updatedAtUtc }`.
+- No new create, list, update-by-ID, or delete endpoint was added or assumed.
+- Multiple frontend notes are stored as a versioned JSON document inside the existing `content` string.
+- The JSON document uses `format: "developer-journal-notes-board"`, `version: 1`, and a `notes` array.
+- Frontend create, update, and delete operations modify that array and persist the complete document through the existing `PUT /Notes` request.
+- Existing plain-text content is not discarded. The parser converts it into one yellow sticky note named `Imported note`; it is written in board format after the user next changes the board.
+- Empty existing content produces an empty board.
+- A failed initial GET cannot trigger an empty PUT because the page now enables autosave only after a successful load.
+
+### Updated `src/models/Note.ts`
+
+- The original backend `Note` interface remains unchanged.
+- `NOTE_COLORS` defines the supported sticky colors: yellow, peach, mint, blue, and lavender.
+- `NoteColor` derives a string-literal union from that constant.
+- `StickyNote` defines client-side note ID, title, content, color, pinned state, creation time, and update time.
+- `NotesBoard` defines the versioned document stored in the backend note's `content` property.
+- These board types are frontend persistence contracts; they do not require matching backend database columns.
+
+### Updated `src/services/note-service.ts`
+
+- Existing `getNote()` and `saveNote(content)` methods remain available and still call `GET /Notes` and `PUT /Notes`.
+- `parseNotesBoard(content)` safely recognizes the marked version-1 board format.
+- Parsed entries are normalized so missing optional client fields get safe defaults; malformed array entries without string IDs are dropped.
+- Unrecognized JSON is treated as legacy text instead of being destroyed.
+- `serializeNotesBoard(board)` converts the board to the string accepted by the current endpoint.
+- `getNotesBoard()` loads the backend note and returns a parsed board.
+- `saveNotesBoard(board)` serializes the board, saves it through the existing endpoint, and parses the returned content.
+- IDs use `crypto.randomUUID()` when available and a timestamp/random fallback otherwise.
+
+### Updated `src/app/notes/page.tsx`
+
+- The route remains `/notes`, stays protected by `ProtectedLayout`, and retains full-page mode.
+- A left-side library displays multiple small sticky cards. Clicking a card opens it in the large editor.
+- `New note` creates an empty note, selects it, clears search, and queues autosave.
+- Users can give each note a title up to 100 characters and edit unrestricted text content.
+- Search filters by both title and content without changing persisted data.
+- Pinned notes sort before unpinned notes; each group sorts by most recently updated.
+- Five color choices update both the small card and large editor appearance.
+- Delete uses a confirmation dialog, removes the selected note, and selects the next available note.
+- Empty, loading, and no-search-results states are handled separately.
+- The editor shows word count and the note's formatted update timestamp.
+- Autosave is debounced by 650 milliseconds.
+- Saves are serialized through a promise queue so rapid edits do not intentionally launch parallel PUT operations.
+- Save status reports loading, saving, saved, and error states through an `aria-live` region.
+- The last loaded/saved serialization is tracked to avoid redundant requests.
+- A mounted-state guard prevents async completions from updating an unmounted component.
+
+### Updated Notes Styling in `src/app/globals.css`
+
+- The Notes page now uses a two-column desktop layout: a compact card library and a large editor workspace.
+- Sticky cards have color variants, short previews, active/focus outlines, subtle rotation, hover elevation, and timestamps.
+- The large sheet matches the selected color and contains a toolbar, color swatches, title field, content editor, and metadata footer.
+- The save indicator is a floating status pill with distinct neutral, saving, saved, and error colors.
+- At tablet/mobile widths the layout becomes a single column with the card library above the editor.
+- On very small screens the card grid becomes one column and editor controls stack vertically.
+- Labels, pressed states, visible focus states, live status, semantic sections, and empty-state messaging support keyboard and assistive-technology use.
+
+### Notes CRUD Flow With the Existing API
+
+| User action | Frontend behavior | Backend request |
+| --- | --- | --- |
+| Load notes | Parse the single content string into a board | `GET /Notes` |
+| Create note | Add a `StickyNote` to the board array | Debounced `PUT /Notes` with serialized board |
+| Read/select note | Select a local card and show its large editor | None |
+| Update title/content/color/pin | Replace fields in the selected array item | Debounced `PUT /Notes` with serialized board |
+| Delete note | Remove the selected array item after confirmation | Debounced `PUT /Notes` with serialized board |
+| Search notes | Filter the loaded array in browser memory | None |
+
+### Important Constraint
+
+- This design works with the existing endpoint as long as the backend/database permits a sufficiently large `content` value and returns the saved content unchanged. Because the entire board is one backend record, there is no server-side per-sticky-note querying, independent authorization, partial update, or conflict detection. A dedicated multi-note backend would be preferable if the board becomes large or needs collaborative editing.

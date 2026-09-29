@@ -85,6 +85,11 @@ export default function Navbar() {
                 Notes
               </Link>
             </li>
+            <li className="nav-item">
+              <Link href="/form-practice" className={pathname === '/form-practice' ? 'nav-link active' : 'nav-link'}>
+                Form Practice
+              </Link>
+            </li>
           </ul>
           
           <div className="d-flex align-items-center">
