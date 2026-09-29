@@ -795,6 +795,14 @@ The frontend defines the following contract types:
 - Several routes use `<a href="...">` instead of Next `Link`, which triggers full page navigations rather than client-side transitions.
 - The README omits standups and notes, but the codebase does implement them.
 
+### Current live-code validation notes (updated 2026-09-29)
+- Verified against the current repository state, the live app still uses a browser-side auth model through `localStorage` with `saveAuthData`, `getCurrentUser`, and `logout` in `src/lib/auth.ts`.
+- The actual runtime flow is consistent with the summary: the root redirect in `src/app/page.tsx` sends authenticated users to `/dashboard` and unauthenticated users to `/login`, while `ProtectedLayout` wraps private pages with `AuthGuard` and `Navbar`.
+- The live `Navbar` implementation in `src/components/ui/Navbar.tsx` exposes Dashboard, Daily Logs, and Notes; the standup routes are present as direct pages, but they are not included as a primary nav item in the current top menu.
+- The project is still a frontend-only Next.js app: `auth-service.ts`, `dailylog-service.ts`, and `note-service.ts` are backend-connected through the shared Axios client, while `standup-service.ts` remains an in-memory mock store with simulated async delays.
+- The app does not currently include a secure cookie-based auth flow or server-side middleware; all auth protection remains client-side and therefore best treated as a frontend convenience layer rather than hardened production security.
+- The repository README remains materially older than the current codebase and is not a complete representation of the live app’s actual route structure and feature set.
+
 ## 11. Additional Observations
 
 ### Performance Considerations
